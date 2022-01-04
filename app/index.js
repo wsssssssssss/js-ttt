@@ -62,7 +62,7 @@ const lineDel = function(arr) {
     const array = Array.from(new Set(arr));
     if(array.length == 1 && array[0] !== 0 && !linedelete){
         div.innerHTML = `
-            <h3>${array[0]}P 승리!</h3>
+            <h3 id="p_${array[0]}">${array[0]}P 승리!</h3>
             <button class="reset-btn">다시하기</button>
         `;
         root.append(div);
