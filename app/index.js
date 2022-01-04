@@ -1,10 +1,21 @@
 const canvas = document.querySelector("#root .canvas");
 const ctx = canvas.getContext('2d');
+ctx.lineWidth = 10;
+ctx.lineCap = 'round';
 
-let turn = 1;
+let turn = 2;
+let gameResult = false;
+let linedelete = false;
+let checkBlock =  [
+    [0, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0]
+];
+
 const player = document.querySelector("#root .player_box .player");
-const boxSize = 120;
-const boradHeight = window.innerHeight / 2 - boxSize;
+const root = document.querySelector("#root");
+const boxSize = 130;
+const filedHeight = window.innerHeight / 2 - boxSize;
 const lineArr = [
     {
         startXpos: window.innerWidth/2 - (boxSize / 2),
@@ -29,66 +40,190 @@ const lineArr = [
     }
 ];
 
+const filedStartX = window.innerWidth/2 - (boxSize*3)/2;
+const filedEndX = window.innerWidth/2 + (boxSize*3)/2;
+const filedStartY = filedHeight;
+const filedEndY = filedHeight + (boxSize*3);
 
-const checkBlock =  [
-    [0, 0, 0],
-    [0, 0, 0],
-    [0, 0, 0]
-];
 
 const setField = function() {
-    ctx.lineWidth = 10;
-    ctx.lineCap = 'round';
-
-    player.innerText = '1P';
-    player.classList.add("first");
-    
     lineArr.forEach( (ele) => {
         ctx.beginPath();
-        ctx.moveTo(ele.startXpos, ele.startYpos + boradHeight);
-        ctx.lineTo(ele.endXpos, ele.endYpos + boradHeight);
+        ctx.moveTo(ele.startXpos, ele.startYpos + filedHeight);
+        ctx.lineTo(ele.endXpos, ele.endYpos + filedHeight);
         ctx.stroke();
     } )
+};
+
+const lineDel = function(arr) {
+    const div = document.createElement("div");
+    div.classList.add("game-over", "flex");
+
+    const array = Array.from(new Set(arr));
+    if(array.length == 1 && array[0] !== 0 && !linedelete){
+        div.innerHTML = `
+            <h3>${array[0]}P 승리!</h3>
+            <button class="reset-btn">다시하기</button>
+        `;
+        root.append(div);
+        render();
+        linedelete = true;
+        gameResult = true;
+        return false;
+    }
 }
 
-setField();
+const gameOver = function() {
+    const div = document.createElement("div");
+    div.classList.add("game-over", "flex");
 
+    const checkBlock2 = [];
+    const checkBlock3 = [];
+    let count = 0;
+
+    checkBlock.forEach( (arr, idx1) => {
+        const array = [];
+        arr.forEach( (ele, idx2) => {
+            if(ele !== 0) count += 1;
+            array.push(checkBlock[idx2][idx1]);
+        } )
+        checkBlock2.push(array);
+
+        lineDel(arr);
+        
+    } )
+
+    const subarr = [];
+    const subarr2 = []
+    const arr = [];
+
+    for(let i=0; i<=2; i++){
+        subarr.push(checkBlock[i][i]);
+    }
+    for(let j=2; j>=0; j--){
+        arr.push(j);
+    }
+    arr.forEach( (ele, idx) => {
+        subarr2.push(checkBlock[ele][idx]);
+    } )
+
+    checkBlock3.push(subarr);
+    checkBlock3.push(subarr2);
+
+    checkBlock2.forEach( (arr) => {
+        lineDel(arr);
+    } )
+
+    checkBlock3.forEach( (arr) => {
+        lineDel(arr);
+    } )
+
+    if(!linedelete){
+        if(count === 9){
+            div.innerHTML = `
+                <h3>게임오버</h3>
+                <button class="reset-btn">다시하기</button> `;
+            root.append(div);
+            render();
+            gameResult = true;
+        }
+    }
+};
+
+const render = function(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.strokeStyle = "#000";
+    setField();
+
+    if(turn === 1) {
+        turn = 2;
+        player.innerText = '2P';
+        player.classList.add("second");
+        player.classList.remove("first");
+    } else {
+        turn = 1;
+        player.innerText = '1P';
+        player.classList.add("first");
+        player.classList.remove("second");
+    }
+
+    let color = "#ff0000";    
+    checkBlock.forEach( (arr, i) => {
+        arr.forEach( (ele, j) => {
+            if(ele !== 0){
+                if(ele === 1) {
+                    color = '#ff0000';
+                    ctx.strokeStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(filedStartX + (boxSize*j) + 20, filedStartY + (boxSize*i) + 20);
+                    ctx.lineTo(filedStartX + (boxSize*(j+1)) - 20, filedStartY + (boxSize*(i+1)) - 20);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(filedStartX + (boxSize*j) + 20, filedStartY + (boxSize*(i+1)) - 20);
+                    ctx.lineTo(filedStartX + (boxSize*(j+1)) - 20, filedStartY + (boxSize*i) + 20);
+                    ctx.stroke();
+                } else {
+                    color = '#0000ff';
+                    ctx.beginPath();
+                    ctx.strokeStyle = color;
+                    ctx.arc(filedStartX + (boxSize*j) + boxSize/2, filedStartY + (boxSize*i) + boxSize/2, 50, 0, Math.PI * 2, true);
+                    ctx.stroke();
+                }
+            }
+        } )
+    } )
+
+};
+
+render();
 
 canvas.addEventListener("click", function({layerX, layerY}) {
-    const boradStartX = window.innerWidth/2 - (boxSize*3)/2;
-    const boradEndX = window.innerWidth/2 + (boxSize*3)/2;
-    const boradStartY = boradHeight;
-    const boradEndY = boradHeight + (boxSize*3);
-
-    // console.log(boradStartY, boradEndY);
-    if(layerX > boradStartX && layerX < boradEndX && layerY > boradStartY && layerY < boradEndY){
-        let first = -1;
-        let second = -1;
-        if(layerY < lineArr[2].startYpos+boradHeight) first = 0;
-        else if(layerY > lineArr[2].startYpos+boradHeight && layerY < lineArr[3].startYpos+boradHeight) first = 1;
-        else if(layerY > lineArr[3].startYpos+boradHeight) first = 2;
+    if(!gameResult){
+        if(layerX > filedStartX && layerX < filedEndX && layerY > filedStartY && layerY < filedEndY){
+            let first = -1;
+            let second = -1;
+            if(layerY < lineArr[2].startYpos+filedHeight) first = 0;
+            else if(layerY > lineArr[2].startYpos+filedHeight && layerY < lineArr[3].startYpos+filedHeight) first = 1;
+            else if(layerY > lineArr[3].startYpos+filedHeight) first = 2;
+        
+            if(layerX < lineArr[0].startXpos) second = 0;
+            else if(layerX > lineArr[0].startXpos && layerX < lineArr[1].startXpos) second = 1;
+            else if(layerX > lineArr[2].startXpos) second = 2;
     
-        if(layerX < lineArr[0].startXpos) second = 0;
-        else if(layerX > lineArr[0].startXpos && layerX < lineArr[1].startXpos) second = 1;
-        else if(layerX > lineArr[2].startXpos) second = 2;
+            if(checkBlock[first][second] === 0) {
+                checkBlock[first][second] = turn;
 
-        if(checkBlock[first][second] === 0) {
-            checkBlock[first][second] = turn;
-
-            if(turn === 1) turn = 2
-            else if(turn === 2) turn = 1;
+                gameOver();
+                render();
+            }
         }
-        // console.log(first, second, turn);
-        console.log(checkBlock[0]);
-        console.log(checkBlock[1]);
-        console.log(checkBlock[2]);
-        console.log('--------');
     }
 
 
-    // console.log(layerX, layerY);
-    // console.log(lineArr[0].startXpos, lineArr[2].startYpos + window.innerHeight / 2 - boxSize);
-    // console.log(lineArr[1].startXpos, lineArr[3].startYpos + window.innerHeight / 2 - boxSize);
+});
+canvas.addEventListener("mousemove", function({layerX, layerY}) {
+    if(layerX > filedStartX && layerX < filedEndX && layerY > filedStartY && layerY < filedEndY){
+        canvas.style.cursor = 'pointer';
+    } else {
+        canvas.style.cursor = 'auto';
+    }
+});
+
+root.addEventListener("click", function({target}) {
+    if(target.classList.contains("reset-btn")){
+        console.log(document.querySelector("#root .game-over"));
+        document.querySelector("#root .game-over").remove();
+        turn = 2;
+        gameResult = false;
+        linedelete = false;
+        checkBlock = [
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0]
+        ];
+        render();
+    }
 })
 
 
