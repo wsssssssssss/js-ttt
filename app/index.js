@@ -5,9 +5,7 @@ canvas.width = 310;
 canvas.height = 310;
 // true = 0
 // false = x
-let turnState = true;
-
-
+let turnState;
 const turnChange = () =>{
     turnState = turnState ? false : true;
     if(turnState){
@@ -15,8 +13,9 @@ const turnChange = () =>{
         return;
     }
     turn.innerText = '2P'
-
+    
 }
+turnChange();
 
 
 // 그리기 
@@ -62,7 +61,7 @@ const listenerY = (ey) => {
 
 // X좌표찾기 및 함수호출
 const listener = (e) => {
-    turnChange();
+    
     const setX = e.offsetX;
     const setY = e.offsetY;
    
@@ -79,19 +78,57 @@ const listener = (e) => {
     let yNum = listenerY(setY);
     boardClick(xNum, yNum);
 };
-//초기화 파라미터 없음
-//진짜 그려주는 함수 gameboard
-//조건 검사 함수 배열
+
+//초기화하는 함수 파라미터 없음
+//진짜 그려주는 함수  gameboard를 파라미터로 받음
+//조건 검사 함수 
+
 const boardClick = (xNum, yNum) => {  
-    if(gameBoard[xNum][yNum] == 0){
+    if(gameBoard[yNum][xNum] == 0){
+        turnChange();
         if(turnState){
             gameBoard[yNum][xNum] = 'o';
         }else{
             gameBoard[yNum][xNum] = 'x';
         }
+
+        ctx.beginPath();
+        xNum =  100 * (xNum); 
+        yNum =  100 * (yNum); 
+        if(turnState){
+            let count = 0;
+            const frame = () =>{
+                count += 0.05;
+                if(count <= 2){
+                    ctx.beginPath();
+                    ctx.arc(50 + xNum , 50 + yNum , 40, -Math.PI * 0.5, Math.PI * count);
+                    ctx.strokeStyle = 'red'; 
+                    ctx.lineWidth = 9;
+                    ctx.stroke();
+                    requestAnimationFrame(frame);
+                    return;
+                }   
+            }
+            requestAnimationFrame(frame)
+        }else{
+            ctx.moveTo(10 + xNum , 10 + yNum);
+            ctx.lineTo(90 + xNum , 90 + yNum);
+            ctx.moveTo(10 + xNum , 90 + yNum);
+            ctx.lineTo(90 + xNum , 10 + yNum);
+
+        }
+        
+        ctx.lineWidth = 10;
+        ctx.strokeStyle = '#000'; 
+        ctx.stroke();
+
+
     }
-    
+    gameBoard.forEach((e, idx) => {
+        console.log(e,idx);
+    })
 };
+
 
 
 canvas.addEventListener('click', (e) => listener(e));
