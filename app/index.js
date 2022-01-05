@@ -45,12 +45,46 @@ const filedEndX = window.innerWidth/2 + (boxSize*3)/2;
 const filedStartY = filedHeight;
 const filedEndY = filedHeight + (boxSize*3);
 
-// const createCirlce = function(color, xPos, Ypos) {
-//     ctx.strokeStyle = color;
-//     ctx.beginPath();
-//     ctx.arc(filedStartX + (boxSize*second) + boxSize/2, filedStartY + (boxSize*first) + boxSize/2, 50, 0, Math.PI * 2, true);
-//     ctx.stroke();
-// };
+
+let num = 0;
+
+const createCirlce = function(color, xPos, yPos) {
+    ctx.strokeStyle = color;
+
+    if(num <= 100){
+        num++;
+        ctx.beginPath();
+        ctx.clearRect(xPos - 56, yPos - 56, boxSize - 18, boxSize - 18);
+        ctx.arc(xPos, yPos, 50, Math.PI * 2 / 100 * num, 0, true);
+        ctx.stroke();
+        requestAnimationFrame(() => createCirlce(color, xPos, yPos));
+        
+    }
+    
+};
+
+
+const createLine = function(color, startxPos, startyPos, xLength, yLength) {
+    // console.log(length);
+    ctx.strokeStyle = color;
+    if(num <= 30){
+        num++;
+
+        ctx.beginPath();
+        ctx.moveTo(startxPos, startyPos);
+        ctx.lineTo(startxPos + (xLength/30 * num), startyPos + (yLength/30 * num));
+        ctx.stroke();
+
+        requestAnimationFrame(() => createLine(color, startxPos, startyPos, xLength, yLength));
+        
+    }
+    // return new Promise(() => {
+    // })
+
+    
+};
+
+
 
 const setField = function() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -231,19 +265,15 @@ canvas.addEventListener("click", function({layerX, layerY}) {
             if(checkBlock[first][second] === 0) {
 
 
-                // if(turn === 1) {
-                //     ctx.strokeStyle = '#ff0000';
-                //     ctx.beginPath();
-                //     ctx.moveTo(filedStartX + (boxSize*second) + 20, filedStartY + (boxSize*first) + 20);
-                //     ctx.lineTo(filedStartX + (boxSize*(second+1)) - 20, filedStartY + (boxSize*(first+1)) - 20);
-                //     ctx.stroke();
-                //     ctx.beginPath();
-                //     ctx.moveTo(filedStartX + (boxSize*second) + 20, filedStartY + (boxSize*(first+1)) - 20);
-                //     ctx.lineTo(filedStartX + (boxSize*(second+1)) - 20, filedStartY + (boxSize*first) + 20);
-                //     ctx.stroke();
-                // } else {
-                //     createCirlce('#0000ff', filedStartX + (boxSize*second) + boxSize/2, filedStartY + (boxSize*first) + boxSize/2);
-                // }
+                if(turn === 1) {
+                    num = 0;
+                    createLine('#ff0000', filedStartX + (boxSize*second) + 20, filedStartY + (boxSize*first) + 20, boxSize - 40, boxSize - 40);
+                    num = 0;
+                    createLine('#ff0000', filedStartX + (boxSize*(second+1)) - 20, filedStartY + (boxSize*first) + 20, -(boxSize - 40), boxSize - 40);
+                } else {
+                    num = 0;
+                    createCirlce('#0000ff', filedStartX + (boxSize*second) + boxSize/2, filedStartY + (boxSize*first) + boxSize/2);
+                }
 
                 checkBlock[first][second] = turn;
 
@@ -255,6 +285,10 @@ canvas.addEventListener("click", function({layerX, layerY}) {
 
 
 });
+
+
+
+
 canvas.addEventListener("mousemove", function({layerX, layerY}) {
     if(layerX > filedStartX && layerX < filedEndX && layerY > filedStartY && layerY < filedEndY){
         canvas.style.cursor = 'pointer';
