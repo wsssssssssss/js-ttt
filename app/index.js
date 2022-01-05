@@ -1,26 +1,29 @@
 const canvas = document.querySelector("#canvas");
 const ctx = canvas.getContext("2d");
 const turn = document.querySelector(".turn");
+const gameState = document.querySelector('.changeTxt');
 canvas.width = 310;
 canvas.height = 310;
+let gameBoard = [];
+let count = 0;
 // true = 0
 // false = x
-let turnState;
+let turnState = false;
 const turnChange = () =>{
-    turnState = turnState ? false : true;
+    turnState = !turnState;
     if(turnState){
         turn.innerText = '1P'
         return;
     }
-    turn.innerText = '2P'
-    
+    turn.innerText = '2P'   
 }
 turnChange();
 
-
 // 그리기 
-let gameBoard = [];
-const boardDrawing = () => {
+const init = () => {
+    count = 0;
+    gameBoard = [];
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.beginPath();
     for(let i = 1; i < 3; i++){
         ctx.moveTo(5, 100 * i);
@@ -39,33 +42,14 @@ const boardDrawing = () => {
         }
     }
 };
-boardDrawing();
-
-
-// Y좌표 찾아주기
-const listenerY = (ey) => {
-    let yNum = 0;
-    if(ey < 100){
-        yNum = 0;
-        return yNum;
-    }
-    if(ey < 200){
-        yNum = 1;
-        return yNum;
-    }
-    if(ey < 300){
-        yNum = 2;
-        return yNum;
-    }
-}
+init();
 
 // X좌표찾기 및 함수호출
 const listener = (e) => {
-    
     const setX = e.offsetX;
     const setY = e.offsetY;
-   
     let xNum = 0;
+    let yNum = 0;
     if(setX < 300){
         xNum = 2;
     }
@@ -75,60 +59,144 @@ const listener = (e) => {
     if(setX < 100){
         xNum = 0;
     }
-    let yNum = listenerY(setY);
+    if(setY < 300){
+        yNum = 2;
+    }
+    if(setY < 200){
+        yNum = 1;
+    }
+    if(setY < 100){
+        yNum = 0;
+    }
     boardClick(xNum, yNum);
 };
 
-//초기화하는 함수 파라미터 없음
-//진짜 그려주는 함수  gameboard를 파라미터로 받음
-//조건 검사 함수 
 
 const boardClick = (xNum, yNum) => {  
     if(gameBoard[yNum][xNum] == 0){
-        turnChange();
+        
+        if(turnState) gameBoard[yNum][xNum] = 'o';
+        else gameBoard[yNum][xNum] = 'x';
+        let x =  100 * (xNum); 
+        let y =  100 * (yNum); 
+        let count = -0.5;
         if(turnState){
-            gameBoard[yNum][xNum] = 'o';
-        }else{
-            gameBoard[yNum][xNum] = 'x';
-        }
-
-        ctx.beginPath();
-        xNum =  100 * (xNum); 
-        yNum =  100 * (yNum); 
-        if(turnState){
-            let count = 0;
-            const frame = () =>{
+            const arcFrame = () =>{
                 count += 0.05;
                 if(count <= 2){
+                    ctx.clearRect(x + 10, y + 10, 80, 80);
                     ctx.beginPath();
-                    ctx.arc(50 + xNum , 50 + yNum , 40, -Math.PI * 0.5, Math.PI * count);
+                    ctx.arc(50 + x , 50 + y , 35, -Math.PI * 0.5, Math.PI * count);
                     ctx.strokeStyle = 'red'; 
-                    ctx.lineWidth = 9;
+                    ctx.lineWidth = 10;
                     ctx.stroke();
-                    requestAnimationFrame(frame);
+                    requestAnimationFrame(arcFrame);
                     return;
                 }   
-            }
-            requestAnimationFrame(frame)
+            };
+            requestAnimationFrame(arcFrame);
         }else{
-            ctx.moveTo(10 + xNum , 10 + yNum);
-            ctx.lineTo(90 + xNum , 90 + yNum);
-            ctx.moveTo(10 + xNum , 90 + yNum);
-            ctx.lineTo(90 + xNum , 10 + yNum);
-
+            const lineFrame = () => {
+                count += 0.05;
+                ctx.beginPath();
+                if(count){
+                    ctx.moveTo(10 + x  , 10 + y );
+                    ctx.lineTo(90 + x  , 90 + y );
+                    ctx.moveTo(10 + x  , 90 + y );
+                    ctx.lineTo(90 + x  , 10 + y );
+                    ctx.lineWidth = 10;
+                    ctx.strokeStyle = '#000'; 
+                    ctx.stroke();
+                    requestAnimationFrame(lineFrame);
+                    return;
+                }
+            };
+            requestAnimationFrame(lineFrame);
         }
-        
-        ctx.lineWidth = 10;
-        ctx.strokeStyle = '#000'; 
-        ctx.stroke();
-
-
+        turnChange();
+        gameBoardChk(xNum, yNum, gameBoard);
     }
-    gameBoard.forEach((e, idx) => {
-        console.log(e,idx);
-    })
 };
 
+const gameBoardChk = (x, y, gameArray) => {
+    count++;
+    let postionLine = 1;
+    let valueChkX = [];
+    for(let i = 0; i < 3; i++) {
+        if(gameArray[y][i] == gameArray[y][x]){
+            valueChkX.push(true);
+        }else{
+            valueChkX.push(false);
+        }
+    }
 
+    let valueChkY = [];
+    for(let i = 0; i < 3; i++) {
+        if(gameArray[i][x] == gameArray[y][x]){
+            valueChkY.push(true);
+        }else{
+            valueChkY.push(false);
+        }
+    }
+    
+    let valueChkDiagonalLeft = []; 
+    let leftLineChk = [[0,0],[1,1],[2,2]]
+    gameBoard.forEach((arr, idx) => {
+        let i = leftLineChk[idx];
+        if(gameBoard[i[0]][i[1]] == gameArray[y][x]){
+            valueChkDiagonalLeft.push(true);
+        }else{
+            valueChkDiagonalLeft.push(false);
+        }
+    })
+
+    let valueChkDiagonalRight = []; 
+    let rightLineChk = [[0,2],[1,1],[2,0]]
+    gameBoard.forEach((arr, idx) => {
+        let i = rightLineChk[idx];
+        if(gameBoard[i[0]][i[1]] == gameArray[y][x]){
+            valueChkDiagonalRight.push(true);
+        }else{
+            valueChkDiagonalRight.push(false);
+        }
+    })
+
+    if(count == 9){
+        gameEnd('over', x, y);
+    }
+    if(!new Set(valueChkX).has(false) || !new Set(valueChkY).has(false) || !new Set(valueChkDiagonalLeft).has(false) || !new Set(valueChkDiagonalRight).has(false)){
+        gameEnd(turnState, x, y);
+        createLine
+    }
+}
+
+
+
+
+const gameEnd = (action, x, y) => {
+    console.log(action);
+    switch (action) {
+        case true:
+            gameState.innerHTML = `<span class="player2">2P</span> 승리 <br><button class="btn">다시하기</button>`
+            break;
+        case false:
+            gameState.innerHTML = `<span class="player1">1P</span>  승리 <br> <button class="btn">다시하기</button>`
+            break;
+        case 'over':
+            gameState.innerHTML = `게임 오버 <button class="btn">다시하기</button>`
+            break;
+    }
+    canvas.style.pointerEvents = 'none';
+}
+
+const createLine = (ex, ey, x, y) => {
+    ctx.beginPath();
+    ctx.moveTo(5, 50 );
+    ctx.lineTo(295, 50 );
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = '#000'; 
+    ctx.stroke();
+}
 
 canvas.addEventListener('click', (e) => listener(e));
+gameState.addEventListener('click', init);
