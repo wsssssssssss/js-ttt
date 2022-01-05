@@ -45,8 +45,18 @@ const filedEndX = window.innerWidth/2 + (boxSize*3)/2;
 const filedStartY = filedHeight;
 const filedEndY = filedHeight + (boxSize*3);
 
+// const createCirlce = function(color, xPos, Ypos) {
+//     ctx.strokeStyle = color;
+//     ctx.beginPath();
+//     ctx.arc(filedStartX + (boxSize*second) + boxSize/2, filedStartY + (boxSize*first) + boxSize/2, 50, 0, Math.PI * 2, true);
+//     ctx.stroke();
+// };
 
 const setField = function() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.strokeStyle = "#000";
+
     lineArr.forEach( (ele) => {
         ctx.beginPath();
         ctx.moveTo(ele.startXpos, ele.startYpos + filedHeight);
@@ -55,11 +65,13 @@ const setField = function() {
     } )
 };
 
-const lineDel = function(arr) {
+
+
+const lineDel = function(obj) {
     const div = document.createElement("div");
     div.classList.add("game-over", "flex");
 
-    const array = Array.from(new Set(arr));
+    const array = Array.from(new Set(obj.arr));
     if(array.length == 1 && array[0] !== 0 && !linedelete){
         div.innerHTML = `
             <h3 id="p_${array[0]}">${array[0]}P 승리!</h3>
@@ -67,8 +79,35 @@ const lineDel = function(arr) {
         `;
         root.append(div);
         render();
+        
+        ctx.strokeStyle = "#ff0000";
+        if(obj.num === 1){
+            ctx.beginPath();
+            ctx.moveTo(filedStartX, filedStartY + (boxSize/2) + (boxSize*obj.idx));
+            ctx.lineTo(filedEndX, filedStartY + (boxSize/2) + (boxSize*obj.idx));
+            ctx.stroke();
+        } else if(obj.num === 2){
+            ctx.beginPath();
+            ctx.moveTo(filedStartX + (boxSize/2) + (boxSize*obj.idx), filedStartY);
+            ctx.lineTo(filedStartX + (boxSize/2) + (boxSize*obj.idx), filedEndY);
+            ctx.stroke();
+        } else {
+            if(obj.idx === 0){
+                ctx.beginPath();
+                ctx.moveTo(filedStartX + 20, filedStartY + 20);
+                ctx.lineTo(filedEndX - 20, filedEndY - 20);
+                ctx.stroke();
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(filedEndX - 20, filedStartY + 20);
+                ctx.lineTo(filedStartX + 20, filedEndY - 20);
+                ctx.stroke();
+            }
+        }
+        
         linedelete = true;
         gameResult = true;
+        
         return false;
     }
 }
@@ -89,7 +128,7 @@ const gameOver = function() {
         } )
         checkBlock2.push(array);
 
-        lineDel(arr);
+        lineDel({arr, idx: idx1, num: 1});
         
     } )
 
@@ -110,12 +149,12 @@ const gameOver = function() {
     checkBlock3.push(subarr);
     checkBlock3.push(subarr2);
 
-    checkBlock2.forEach( (arr) => {
-        lineDel(arr);
+    checkBlock2.forEach( (arr, idx) => {
+        lineDel({arr, idx, num: 2});
     } )
 
-    checkBlock3.forEach( (arr) => {
-        lineDel(arr);
+    checkBlock3.forEach( (arr, idx) => {
+        lineDel({arr, idx, num: 3});
     } )
 
     if(!linedelete){
@@ -131,9 +170,6 @@ const gameOver = function() {
 };
 
 const render = function(){
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.beginPath();
-    ctx.strokeStyle = "#000";
     setField();
 
     if(turn === 1) {
@@ -178,6 +214,7 @@ const render = function(){
 
 render();
 
+
 canvas.addEventListener("click", function({layerX, layerY}) {
     if(!gameResult){
         if(layerX > filedStartX && layerX < filedEndX && layerY > filedStartY && layerY < filedEndY){
@@ -192,10 +229,26 @@ canvas.addEventListener("click", function({layerX, layerY}) {
             else if(layerX > lineArr[2].startXpos) second = 2;
     
             if(checkBlock[first][second] === 0) {
+
+
+                // if(turn === 1) {
+                //     ctx.strokeStyle = '#ff0000';
+                //     ctx.beginPath();
+                //     ctx.moveTo(filedStartX + (boxSize*second) + 20, filedStartY + (boxSize*first) + 20);
+                //     ctx.lineTo(filedStartX + (boxSize*(second+1)) - 20, filedStartY + (boxSize*(first+1)) - 20);
+                //     ctx.stroke();
+                //     ctx.beginPath();
+                //     ctx.moveTo(filedStartX + (boxSize*second) + 20, filedStartY + (boxSize*(first+1)) - 20);
+                //     ctx.lineTo(filedStartX + (boxSize*(second+1)) - 20, filedStartY + (boxSize*first) + 20);
+                //     ctx.stroke();
+                // } else {
+                //     createCirlce('#0000ff', filedStartX + (boxSize*second) + boxSize/2, filedStartY + (boxSize*first) + boxSize/2);
+                // }
+
                 checkBlock[first][second] = turn;
 
-                gameOver();
                 render();
+                gameOver();
             }
         }
     }
@@ -212,7 +265,6 @@ canvas.addEventListener("mousemove", function({layerX, layerY}) {
 
 root.addEventListener("click", function({target}) {
     if(target.classList.contains("reset-btn")){
-        console.log(document.querySelector("#root .game-over"));
         document.querySelector("#root .game-over").remove();
         turn = 2;
         gameResult = false;
