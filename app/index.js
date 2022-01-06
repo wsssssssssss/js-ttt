@@ -6,6 +6,7 @@ ctx.lineCap = 'round';
 let turn = 2;
 let gameResult = false;
 let linedelete = false;
+let animation = false;
 let checkBlock =  [
     [0, 0, 0],
     [0, 0, 0],
@@ -45,46 +46,50 @@ const filedEndX = window.innerWidth/2 + (boxSize*3)/2;
 const filedStartY = filedHeight;
 const filedEndY = filedHeight + (boxSize*3);
 
-
 let num = 0;
 
 const createCirlce = function(color, xPos, yPos) {
-    ctx.strokeStyle = color;
-
-    if(num <= 100){
+    if(num < 40){
+        ctx.strokeStyle = color;
         num++;
         ctx.beginPath();
         ctx.clearRect(xPos - 56, yPos - 56, boxSize - 18, boxSize - 18);
-        ctx.arc(xPos, yPos, 50, Math.PI * 2 / 100 * num, 0, true);
+        ctx.arc(xPos, yPos, 50, (Math.PI * 2 / 40) * num, 0, true);
         ctx.stroke();
         requestAnimationFrame(() => createCirlce(color, xPos, yPos));
-        
     }
     
 };
 
-
-const createLine = function(color, startxPos, startyPos, xLength, yLength) {
-    // console.log(length);
-    ctx.strokeStyle = color;
-    if(num <= 30){
+const createLine = function(color, startxPos1, startyPos1, xLength1, yLength1, startxPos2, startyPos2, xLength2, yLength2) {
+    if(num < 20){
+        ctx.strokeStyle = color;
         num++;
+        ctx.clearRect(startxPos1 - 5, startyPos1 - 5, xLength1 + 10, yLength1 + 10);
+        ctx.beginPath();
+        ctx.moveTo(startxPos1, startyPos1);
+        ctx.lineTo(startxPos1 + (xLength1/20 * num), startyPos1 + (yLength1/20 * num));
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(startxPos2, startyPos2);
+        ctx.lineTo(startxPos2 + (xLength2/20 * num), startyPos2 + (yLength2/20 * num));
+        ctx.stroke();
+        requestAnimationFrame(() => createLine(color, startxPos1, startyPos1, xLength1, yLength1, startxPos2, startyPos2, xLength2, yLength2));
+    }
 
+};
+
+const createGameEndLine = function(color, startxPos, startyPos, xLength, yLength) {
+    if(num < 45){
+        ctx.strokeStyle = color;
+        num++;
         ctx.beginPath();
         ctx.moveTo(startxPos, startyPos);
-        ctx.lineTo(startxPos + (xLength/30 * num), startyPos + (yLength/30 * num));
+        ctx.lineTo(startxPos + (xLength/45 * num), startyPos + (yLength/45 * num));
         ctx.stroke();
-
-        requestAnimationFrame(() => createLine(color, startxPos, startyPos, xLength, yLength));
-        
+        requestAnimationFrame(() => createGameEndLine(color, startxPos, startyPos, xLength, yLength));
     }
-    // return new Promise(() => {
-    // })
-
-    
 };
-
-
 
 const setField = function() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -99,52 +104,37 @@ const setField = function() {
     } )
 };
 
-
-
-const lineDel = function(obj) {
+const lineChk = function(obj) {
     const div = document.createElement("div");
     div.classList.add("game-over", "flex");
 
     const array = Array.from(new Set(obj.arr));
     if(array.length == 1 && array[0] !== 0 && !linedelete){
+        gameResult = true;
+        bool = true;
         div.innerHTML = `
             <h3 id="p_${array[0]}">${array[0]}P 승리!</h3>
             <button class="reset-btn">다시하기</button>
         `;
         root.append(div);
-        render();
         
-        ctx.strokeStyle = "#ff0000";
+        num = 0;
         if(obj.num === 1){
-            ctx.beginPath();
-            ctx.moveTo(filedStartX, filedStartY + (boxSize/2) + (boxSize*obj.idx));
-            ctx.lineTo(filedEndX, filedStartY + (boxSize/2) + (boxSize*obj.idx));
-            ctx.stroke();
+            createGameEndLine("#ff0000", filedStartX, filedStartY + (boxSize/2) + (boxSize*obj.idx), boxSize*3, 0);
         } else if(obj.num === 2){
-            ctx.beginPath();
-            ctx.moveTo(filedStartX + (boxSize/2) + (boxSize*obj.idx), filedStartY);
-            ctx.lineTo(filedStartX + (boxSize/2) + (boxSize*obj.idx), filedEndY);
-            ctx.stroke();
+            createGameEndLine("#ff0000", filedStartX + (boxSize/2) + (boxSize*obj.idx), filedStartY, 0, boxSize*3);
         } else {
             if(obj.idx === 0){
-                ctx.beginPath();
-                ctx.moveTo(filedStartX + 20, filedStartY + 20);
-                ctx.lineTo(filedEndX - 20, filedEndY - 20);
-                ctx.stroke();
+                createGameEndLine("#ff0000", filedStartX + 20, filedStartY + 20, boxSize*3 - 40, boxSize*3 - 40);
             } else {
-                ctx.beginPath();
-                ctx.moveTo(filedEndX - 20, filedStartY + 20);
-                ctx.lineTo(filedStartX + 20, filedEndY - 20);
-                ctx.stroke();
+                createGameEndLine("#ff0000", filedEndX - 20, filedStartY + 20, -boxSize*3 + 40, boxSize*3 - 40);
             }
         }
-        
+
         linedelete = true;
         gameResult = true;
-        
-        return false;
     }
-}
+};
 
 const gameOver = function() {
     const div = document.createElement("div");
@@ -162,8 +152,7 @@ const gameOver = function() {
         } )
         checkBlock2.push(array);
 
-        lineDel({arr, idx: idx1, num: 1});
-        
+        lineChk({arr, idx: idx1, num: 1});
     } )
 
     const subarr = [];
@@ -173,9 +162,11 @@ const gameOver = function() {
     for(let i=0; i<=2; i++){
         subarr.push(checkBlock[i][i]);
     }
+
     for(let j=2; j>=0; j--){
         arr.push(j);
     }
+
     arr.forEach( (ele, idx) => {
         subarr2.push(checkBlock[ele][idx]);
     } )
@@ -184,11 +175,11 @@ const gameOver = function() {
     checkBlock3.push(subarr2);
 
     checkBlock2.forEach( (arr, idx) => {
-        lineDel({arr, idx, num: 2});
+        lineChk({arr, idx, num: 2});
     } )
 
     checkBlock3.forEach( (arr, idx) => {
-        lineDel({arr, idx, num: 3});
+        lineChk({arr, idx, num: 3});
     } )
 
     if(!linedelete){
@@ -197,7 +188,6 @@ const gameOver = function() {
                 <h3>게임오버</h3>
                 <button class="reset-btn">다시하기</button> `;
             root.append(div);
-            render();
             gameResult = true;
         }
     }
@@ -249,33 +239,30 @@ const render = function(){
 render();
 
 
-canvas.addEventListener("click", function({layerX, layerY}) {
-    if(!gameResult){
-        if(layerX > filedStartX && layerX < filedEndX && layerY > filedStartY && layerY < filedEndY){
+canvas.addEventListener("click", function(e) {
+    if(!gameResult && !animation){
+        if(e.layerX > filedStartX && e.layerX < filedEndX && e.layerY > filedStartY && e.layerY < filedEndY){
             let first = -1;
             let second = -1;
-            if(layerY < lineArr[2].startYpos+filedHeight) first = 0;
-            else if(layerY > lineArr[2].startYpos+filedHeight && layerY < lineArr[3].startYpos+filedHeight) first = 1;
-            else if(layerY > lineArr[3].startYpos+filedHeight) first = 2;
+            if(e.layerY < lineArr[2].startYpos+filedHeight) first = 0;
+            else if(e.layerY > lineArr[2].startYpos+filedHeight && e.layerY < lineArr[3].startYpos+filedHeight) first = 1;
+            else if(e.layerY > lineArr[3].startYpos+filedHeight) first = 2;
         
-            if(layerX < lineArr[0].startXpos) second = 0;
-            else if(layerX > lineArr[0].startXpos && layerX < lineArr[1].startXpos) second = 1;
-            else if(layerX > lineArr[2].startXpos) second = 2;
+            if(e.layerX < lineArr[0].startXpos) second = 0;
+            else if(e.layerX > lineArr[0].startXpos && e.layerX < lineArr[1].startXpos) second = 1;
+            else if(e.layerX > lineArr[2].startXpos) second = 2;
     
             if(checkBlock[first][second] === 0) {
-
-
                 if(turn === 1) {
                     num = 0;
-                    createLine('#ff0000', filedStartX + (boxSize*second) + 20, filedStartY + (boxSize*first) + 20, boxSize - 40, boxSize - 40);
-                    num = 0;
-                    createLine('#ff0000', filedStartX + (boxSize*(second+1)) - 20, filedStartY + (boxSize*first) + 20, -(boxSize - 40), boxSize - 40);
+                    createLine('#ff0000', filedStartX + (boxSize*second) + 20, filedStartY + (boxSize*first) + 20, boxSize - 40, boxSize - 40,
+                    filedStartX + (boxSize*(second+1)) - 20, filedStartY + (boxSize*first) + 20, -(boxSize - 40), boxSize - 40);
                 } else {
                     num = 0;
                     createCirlce('#0000ff', filedStartX + (boxSize*second) + boxSize/2, filedStartY + (boxSize*first) + boxSize/2);
                 }
-
                 checkBlock[first][second] = turn;
+
 
                 render();
                 gameOver();
@@ -283,11 +270,7 @@ canvas.addEventListener("click", function({layerX, layerY}) {
         }
     }
 
-
 });
-
-
-
 
 canvas.addEventListener("mousemove", function({layerX, layerY}) {
     if(layerX > filedStartX && layerX < filedEndX && layerY > filedStartY && layerY < filedEndY){
@@ -303,6 +286,7 @@ root.addEventListener("click", function({target}) {
         turn = 2;
         gameResult = false;
         linedelete = false;
+        animation = false;
         checkBlock = [
             [0, 0, 0],
             [0, 0, 0],
@@ -310,69 +294,4 @@ root.addEventListener("click", function({target}) {
         ];
         render();
     }
-})
-
-
-
-// ctx.fillStyle = "rgb(255, 0, 0)";
-// ctx.fillRect(10, 10, 50, 50);
-
-// ctx.fillRect(25, 25, 100, 100);
-// ctx.clearRect(45, 45, 60, 60);
-// ctx.storkeRect(50, 50, 50, 50);
-
-
-
-// ctx.moveTo(50, 50);
-// ctx.lineTo(100, 50);
-// ctx.lineTo(100, 100);
-// ctx.lineTo(50, 100);
-// ctx.fill();
-
-// console.log(Math.PI * 2);
-
-// let pp = 0;
-
-// function draw() {
-//     ctx.beginPath();
-//     ctx.arc(75, 75, 50, 0, ((Math.PI * 2) / 100) * pp, true);
-//     ctx.stroke();
-//     console.log(pp);
-//     if(pp < 100){
-//         pp += 1;
-//         requestAnimationFrame(draw);
-//     }
-// }
-
-// draw();
-
-// ctx.beginPath();
-// ctx.arc(75, 75, 50, 0, Math.PI * 1.5, true);
-// ctx.stroke();
-// let x = 0;
-// function draw() {
-//     ctx.beginPath();
-//     ctx.arc(x, 150, 10, 0, Math.PI * 2, false);
-//     ctx.closePath();
-//     ctx.fill();
-//     x += 2;
-
-// requestAnimationFrame(draw);
-// }
-
-// draw();
-
-// var start = Math.PI * 1.5 / 100;
-// animate(start);
-
-
-// function animate(current) {
-//   var ctx = document.querySelector('requestCanvas');
-//   requestAnimationFrame() {
-//     ctx.arc(100, 100, 50, 0, current);
-//     if (current < Math.PI * 1.5) {
-//       current += current;
-//       animate(current);
-//     }
-//   }
-// }
+});
