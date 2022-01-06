@@ -1,5 +1,9 @@
 const canvas = document.querySelector("#root .canvas");
 const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
 ctx.lineWidth = 10;
 ctx.lineCap = 'round';
 
@@ -12,6 +16,9 @@ let checkBlock =  [
     [0, 0, 0],
     [0, 0, 0]
 ];
+
+console.log(window.innerWidth);
+console.log(window.innerHeight);
 
 const player = document.querySelector("#root .player_box .player");
 const root = document.querySelector("#root");
