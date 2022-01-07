@@ -71,6 +71,8 @@ const boardClick = (xNum, yNum) => {
             let x = 100 * (xNum);
             let y = 100 * (yNum);
             let count = -0.5;
+            let lineCount = 10;
+            let lineCountTwo = 90;
             if (turnState) {
                 drawState = false;
                 const arcFrame = () => {
@@ -88,20 +90,32 @@ const boardClick = (xNum, yNum) => {
                     drawState = true;
                 };
                 requestAnimationFrame(arcFrame);
-            } else {
+            } else {  
                 const lineFrame = () => {
+                    drawState = false;
+                    lineCount+= 5
                     ctx.beginPath();
-                    ctx.moveTo(10 + x, 10 + y);
-                    ctx.lineTo(90 + x, 90 + y);
-                    ctx.moveTo(10 + x, 90 + y);
-                    ctx.lineTo(90 + x, 10 + y);
                     ctx.lineWidth = 10;
                     ctx.strokeStyle = '#000';
-                    ctx.stroke();
-                    count += 0.05;
-                    if (count < 2) {
-                    requestAnimationFrame(lineFrame);
+                    if(lineCount <= 80){
+                        ctx.moveTo(20 + x, 20 + y);
+                        ctx.lineTo(lineCount + x, lineCount + y);
+                        ctx.stroke();
+                    }else{
+                        lineCountTwos = lineCount - 70;
+                        if(lineCountTwo >= 25){
+                            lineCountTwo-=5;
+                            ctx.moveTo(80 + x, 20 + y);
+                            ctx.lineTo(x + lineCountTwo ,  y + lineCountTwos);
+                            ctx.stroke();
+
+                        }
                     }
+                    if(lineCount <= 160){
+                        requestAnimationFrame(lineFrame);
+                        return;
+                    }
+                    drawState = true;
                 }
                 requestAnimationFrame(lineFrame);
             }
