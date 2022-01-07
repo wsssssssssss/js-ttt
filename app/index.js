@@ -17,9 +17,6 @@ let checkBlock =  [
     [0, 0, 0]
 ];
 
-console.log(window.innerWidth);
-console.log(window.innerHeight);
-
 const player = document.querySelector("#root .player_box .player");
 const root = document.querySelector("#root");
 const boxSize = 130;
@@ -57,21 +54,29 @@ let num = 0;
 
 const createCirlce = function(color, xPos, yPos) {
     if(num < 40){
-        ctx.strokeStyle = color;
         num++;
+        animation = true;
+
+        ctx.strokeStyle = color;
         ctx.beginPath();
         ctx.clearRect(xPos - 56, yPos - 56, boxSize - 18, boxSize - 18);
         ctx.arc(xPos, yPos, 50, (Math.PI * 2 / 40) * num, 0, true);
         ctx.stroke();
+        
         requestAnimationFrame(() => createCirlce(color, xPos, yPos));
+
+    } else {
+        animation = false;
     }
     
 };
 
 const createLine = function(color, startxPos1, startyPos1, xLength1, yLength1, startxPos2, startyPos2, xLength2, yLength2) {
     if(num < 20){
-        ctx.strokeStyle = color;
         num++;
+        animation = true;
+
+        ctx.strokeStyle = color;
         ctx.clearRect(startxPos1 - 5, startyPos1 - 5, xLength1 + 10, yLength1 + 10);
         ctx.beginPath();
         ctx.moveTo(startxPos1, startyPos1);
@@ -81,7 +86,11 @@ const createLine = function(color, startxPos1, startyPos1, xLength1, yLength1, s
         ctx.moveTo(startxPos2, startyPos2);
         ctx.lineTo(startxPos2 + (xLength2/20 * num), startyPos2 + (yLength2/20 * num));
         ctx.stroke();
+
         requestAnimationFrame(() => createLine(color, startxPos1, startyPos1, xLength1, yLength1, startxPos2, startyPos2, xLength2, yLength2));
+        
+    } else {
+        animation = false;
     }
 
 };
