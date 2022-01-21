@@ -1,0 +1,37 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+.box {
+    text-align: center;
+}
+h1 {
+    height: 100px;
+    line-height: 100px;
+}
+button {
+    display: block;
+    margin-top: 50px;
+    margin-left: 50%;
+    height: 50px;
+    width: 100px;
+    transform: translateX(-50px);
+}
+.hide {
+    visibility: hidden;
+}
+#cover {
+    position: fixed;
+    top: 100px;
+    bottom: 268px;
+    left: 659px;
+    right: 659px;
+    z-index: 10;
+}
+.open {
+    display: none;
+}
+.close {
+    display: block;
+}
