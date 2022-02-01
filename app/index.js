@@ -7,9 +7,9 @@ canvas.height = window.innerHeight;
 ctx.lineWidth = 10;
 ctx.lineCap = 'round';
 
-let turn = 2;
+let turn = false;
 let gameResult = false;
-let linedelete = false;
+let lineCom = false;
 let animation = false;
 let checkBlock =  [
     [0, 0, 0],
@@ -20,6 +20,7 @@ let checkBlock =  [
 const player = document.querySelector("#root .player_box .player");
 const root = document.querySelector("#root");
 const boxSize = 130;
+const filedWidth = window.innerWidth/2 - boxSize - (boxSize/2);
 const filedHeight = window.innerHeight / 2 - boxSize;
 const lineArr = [
     {
@@ -53,58 +54,83 @@ const filedEndY = filedHeight + (boxSize*3);
 let num = 0;
 
 const createCirlce = function(color, xPos, yPos) {
-    if(num < 40){
-        num++;
-        animation = true;
+    num = 0;
 
-        ctx.strokeStyle = color;
-        ctx.beginPath();
-        ctx.clearRect(xPos - 56, yPos - 56, boxSize - 18, boxSize - 18);
-        ctx.arc(xPos, yPos, 50, (Math.PI * 2 / 40) * num, 0, true);
-        ctx.stroke();
-        
-        requestAnimationFrame(() => createCirlce(color, xPos, yPos));
-
-    } else {
-        animation = false;
-    }
+    const animationFun = () => {
+        if(num < 40){
+            num++;
+            animation = true;
     
+            ctx.strokeStyle = color;
+            ctx.beginPath();
+            ctx.clearRect(xPos - 56, yPos - 56, boxSize - 18, boxSize - 18);
+            ctx.arc(xPos, yPos, 50, (Math.PI * 2 / 40) * num, 0, true);
+            ctx.stroke();
+            
+            requestAnimationFrame(animationFun);
+    
+        } else {
+            animation = false;
+        }
+    }
+    animationFun();
 };
 
 const createLine = function(color, startxPos1, startyPos1, xLength1, yLength1, startxPos2, startyPos2, xLength2, yLength2) {
-    if(num < 20){
-        num++;
-        animation = true;
+    num = 0;
 
-        ctx.strokeStyle = color;
-        ctx.clearRect(startxPos1 - 5, startyPos1 - 5, xLength1 + 10, yLength1 + 10);
-        ctx.beginPath();
-        ctx.moveTo(startxPos1, startyPos1);
-        ctx.lineTo(startxPos1 + (xLength1/20 * num), startyPos1 + (yLength1/20 * num));
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(startxPos2, startyPos2);
-        ctx.lineTo(startxPos2 + (xLength2/20 * num), startyPos2 + (yLength2/20 * num));
-        ctx.stroke();
-
-        requestAnimationFrame(() => createLine(color, startxPos1, startyPos1, xLength1, yLength1, startxPos2, startyPos2, xLength2, yLength2));
-        
-    } else {
-        animation = false;
+    const animationFun = () => {
+        if(num < 20){
+            num++;
+            animation = true;
+    
+            ctx.strokeStyle = color;
+            ctx.clearRect(startxPos1 - 5, startyPos1 - 5, xLength1 + 10, yLength1 + 10);
+            ctx.beginPath();
+            ctx.moveTo(startxPos1, startyPos1);
+            ctx.lineTo(startxPos1 + (xLength1/20 * num), startyPos1 + (yLength1/20 * num));
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(startxPos2, startyPos2);
+            ctx.lineTo(startxPos2 + (xLength2/20 * num), startyPos2 + (yLength2/20 * num));
+            ctx.stroke();
+    
+            requestAnimationFrame(animationFun);
+            
+        } else {
+            animation = false;
+        }
     }
-
+    animationFun();
 };
 
 const createGameEndLine = function(color, startxPos, startyPos, xLength, yLength) {
-    if(num < 45){
-        ctx.strokeStyle = color;
-        num++;
-        ctx.beginPath();
-        ctx.moveTo(startxPos, startyPos);
-        ctx.lineTo(startxPos + (xLength/45 * num), startyPos + (yLength/45 * num));
-        ctx.stroke();
-        requestAnimationFrame(() => createGameEndLine(color, startxPos, startyPos, xLength, yLength));
+    num = 0;
+
+    const animationFun = () => {
+        if(num < 45){
+            ctx.strokeStyle = color;
+            num++;
+            ctx.beginPath();
+            ctx.moveTo(startxPos, startyPos);
+            ctx.lineTo(startxPos + (xLength/45 * num), startyPos + (yLength/45 * num));
+            ctx.stroke();
+            requestAnimationFrame(animationFun);
+        }
     }
+    animationFun();
+};
+
+const turnChange = () => {
+    if(turn) {
+        turn = false;
+        player.innerText = '1P';
+    } else {
+        turn = true;
+        player.innerText = '2P';
+    }
+    player.classList.toggle("first");
+    player.classList.toggle("second");
 };
 
 const setField = function() {
@@ -113,19 +139,25 @@ const setField = function() {
     ctx.strokeStyle = "#000";
 
     lineArr.forEach( (ele) => {
-        ctx.beginPath();
         ctx.moveTo(ele.startXpos, ele.startYpos + filedHeight);
         ctx.lineTo(ele.endXpos, ele.endYpos + filedHeight);
-        ctx.stroke();
     } )
+
+    ctx.stroke();
+    
 };
 
 const lineChk = function(obj) {
-    const div = document.createElement("div");
-    div.classList.add("game-over", "flex");
-
+    
     const array = Array.from(new Set(obj.arr));
-    if(array.length == 1 && array[0] !== 0 && !linedelete){
+    // obj.arr의 배열로 넘어온 값을 Set 함수로 중복 제거
+    if(array.length === 1 && array[0] !== 0 && !lineCom){
+        // 첫번째 조건 - 중복이 제거 된 값이 총 1개 일때
+        // 두번째 조건 - 만약 중복 재거 된값이 0(초기값)이 아닐때
+        // 세번째 조건 - 한꺼번에 두개의 라인이 생겨 오류 날수도 있으니 만들어 놓은 보험?
+        const div = document.createElement("div");
+        div.classList.add("game-over", "flex");
+
         gameResult = true;
         bool = true;
         div.innerHTML = `
@@ -134,7 +166,6 @@ const lineChk = function(obj) {
         `;
         root.append(div);
         
-        num = 0;
         if(obj.num === 1){
             createGameEndLine("#ff0000", filedStartX, filedStartY + (boxSize/2) + (boxSize*obj.idx), boxSize*3, 0);
         } else if(obj.num === 2){
@@ -147,12 +178,12 @@ const lineChk = function(obj) {
             }
         }
 
-        linedelete = true;
+        lineCom = true;
         gameResult = true;
     }
 };
 
-const gameOver = function() {
+const gameOverChk = function() {
     const div = document.createElement("div");
     div.classList.add("game-over", "flex");
 
@@ -198,7 +229,7 @@ const gameOver = function() {
         lineChk({arr, idx, num: 3});
     } )
 
-    if(!linedelete){
+    if(!lineCom){
         if(count === 9){
             div.innerHTML = `
                 <h3>게임오버</h3>
@@ -211,26 +242,12 @@ const gameOver = function() {
 
 const render = function(){
     setField();
-
-    if(turn === 1) {
-        turn = 2;
-        player.innerText = '2P';
-        player.classList.add("second");
-        player.classList.remove("first");
-    } else {
-        turn = 1;
-        player.innerText = '1P';
-        player.classList.add("first");
-        player.classList.remove("second");
-    }
-
-    let color = "#ff0000";    
+    
     checkBlock.forEach( (arr, i) => {
         arr.forEach( (ele, j) => {
             if(ele !== 0){
                 if(ele === 1) {
-                    color = '#ff0000';
-                    ctx.strokeStyle = color;
+                    ctx.strokeStyle = '#ff0000';
                     ctx.beginPath();
                     ctx.moveTo(filedStartX + (boxSize*j) + 20, filedStartY + (boxSize*i) + 20);
                     ctx.lineTo(filedStartX + (boxSize*(j+1)) - 20, filedStartY + (boxSize*(i+1)) - 20);
@@ -240,9 +257,8 @@ const render = function(){
                     ctx.lineTo(filedStartX + (boxSize*(j+1)) - 20, filedStartY + (boxSize*i) + 20);
                     ctx.stroke();
                 } else {
-                    color = '#0000ff';
                     ctx.beginPath();
-                    ctx.strokeStyle = color;
+                    ctx.strokeStyle = '#0000ff';
                     ctx.arc(filedStartX + (boxSize*j) + boxSize/2, filedStartY + (boxSize*i) + boxSize/2, 50, 0, Math.PI * 2, true);
                     ctx.stroke();
                 }
@@ -258,30 +274,22 @@ render();
 canvas.addEventListener("click", function(e) {
     if(!gameResult && !animation){
         if(e.layerX > filedStartX && e.layerX < filedEndX && e.layerY > filedStartY && e.layerY < filedEndY){
-            let first = -1;
-            let second = -1;
-            if(e.layerY < lineArr[2].startYpos+filedHeight) first = 0;
-            else if(e.layerY > lineArr[2].startYpos+filedHeight && e.layerY < lineArr[3].startYpos+filedHeight) first = 1;
-            else if(e.layerY > lineArr[3].startYpos+filedHeight) first = 2;
-        
-            if(e.layerX < lineArr[0].startXpos) second = 0;
-            else if(e.layerX > lineArr[0].startXpos && e.layerX < lineArr[1].startXpos) second = 1;
-            else if(e.layerX > lineArr[2].startXpos) second = 2;
+            const first = Math.floor((e.layerY - filedHeight) / boxSize);
+            const second = Math.floor((e.layerX - filedWidth) / boxSize);
     
             if(checkBlock[first][second] === 0) {
-                if(turn === 1) {
-                    num = 0;
+                turnChange();
+                if(turn) {
                     createLine('#ff0000', filedStartX + (boxSize*second) + 20, filedStartY + (boxSize*first) + 20, boxSize - 40, boxSize - 40,
                     filedStartX + (boxSize*(second+1)) - 20, filedStartY + (boxSize*first) + 20, -(boxSize - 40), boxSize - 40);
+                    checkBlock[first][second] = 1;
                 } else {
-                    num = 0;
                     createCirlce('#0000ff', filedStartX + (boxSize*second) + boxSize/2, filedStartY + (boxSize*first) + boxSize/2);
+                    checkBlock[first][second] = 2;
                 }
-                checkBlock[first][second] = turn;
-
 
                 render();
-                gameOver();
+                gameOverChk();
             }
         }
     }
@@ -289,19 +297,15 @@ canvas.addEventListener("click", function(e) {
 });
 
 canvas.addEventListener("mousemove", function({layerX, layerY}) {
-    if(layerX > filedStartX && layerX < filedEndX && layerY > filedStartY && layerY < filedEndY){
-        canvas.style.cursor = 'pointer';
-    } else {
-        canvas.style.cursor = 'auto';
-    }
+    canvas.style.cursor = layerX > filedStartX && layerX < filedEndX && layerY > filedStartY && layerY < filedEndY ? 'pointer' : 'auto' ;
 });
 
 root.addEventListener("click", function({target}) {
     if(target.classList.contains("reset-btn")){
         document.querySelector("#root .game-over").remove();
-        turn = 2;
+        turn = false;
         gameResult = false;
-        linedelete = false;
+        lineCom = false;
         animation = false;
         checkBlock = [
             [0, 0, 0],
