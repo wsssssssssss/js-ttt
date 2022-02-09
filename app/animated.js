@@ -5,8 +5,9 @@ const blockSize = 100; // 한칸 사이즈 (100)
 const boardSize = blockCount * blockSize; // 보드 사이즈
 const radius = blockSize / 4; // 그려지는 X, O의 반지름 (25)
 const checked = Array.from({ length: 9 }).fill(null); // 체크한 부분 저장하는 곳 [null * 9]
+const element = []; // animate 완료된 array
 let turn = true; // 어떤 유저의 턴인지 (true = X, false = O)
-let connectedLine = null; // 연결된 line
+let gameEnd = false; // Game 종료 flag
 
 canvas.width = boardSize;
 canvas.height = boardSize;
@@ -15,36 +16,35 @@ ctx.lineJoin = "round";
 ctx.lineWidth = 10;
 ctx.strokeStyle = "#000";
 
-
 const getCenterPos = (idx) => [idx % blockCount * blockSize + blockSize / 2, Math.floor(idx / blockCount) * blockSize + blockSize / 2]; // idx에 해당하는 x, y 좌표 가져오는 함수
 
-const renderO = (idx) => { // O 그리는 함수
+const renderO = (idx, cnt) => { // O 그리는 함수
   const [x, y] = getCenterPos(idx); // idx에 맞는 x, y 좌표 가져옴
 
   ctx.beginPath();
-  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.arc(x, y, radius, 0, Math.PI * 2 / 100 * cnt);
   ctx.stroke();
 };
 
-const renderX = (idx) => { // X 그리는 함수
+const renderX = (idx, cnt) => { // X 그리는 함수
   const [x, y] = getCenterPos(idx); // idx에 맞는 x, y 좌표 가져옴
 
   ctx.beginPath();
   ctx.moveTo(x - radius, y - radius); // 좌측 상단
-  ctx.lineTo(x + radius, y + radius); // 우측 하단
+  ctx.lineTo(x - radius + (radius * 2 / 100 * cnt), y - radius + (radius * 2 / 100 * cnt)); // 우측 하단
   ctx.moveTo(x + radius, y - radius); // 우측 상단
-  ctx.lineTo(x - radius, y + radius); // 좌측 하단
+  ctx.lineTo(x + radius - (radius * 2 / 100 * cnt), y - radius + (radius * 2 / 100 * cnt)); // 좌측 하단
   ctx.stroke();
 };
 
-const renderLine = () => {
-  const [[sx, sy], [ex, ey]] = connectedLine.map(getCenterPos); // connectedLine = [x, y]; map돌면 [getCenterPos(x), getCenterPos(y)] 값이 return 됨
+const renderLine = (line, cnt) => {
+  const [[sx, sy], [ex, ey]] = line.map(getCenterPos); // connectedLine = [x, y]; map돌면 [getCenterPos(x), getCenterPos(y)] 값이 return 됨 
 
   ctx.save(); // 이전의 canvas style을 저장
   ctx.strokeStyle = "#f00";
   ctx.beginPath();
   ctx.moveTo(sx, sy);
-  ctx.lineTo(ex, ey);
+  ctx.lineTo((sx + (ex - sx) / 100 * cnt), sy + (ey - sy) / 100 * cnt);
   ctx.stroke();
   ctx.restore(); // 저장한 style을 다시 적용
 };
@@ -67,9 +67,7 @@ const render = () => {
 
   renderBoard();
 
-  checked.forEach((v, idx) => v !== null && (v ? renderO(idx) : renderX(idx)));
-
-  connectedLine && renderLine();
+  element.forEach((ele) => ele());
 };
 
 
@@ -103,16 +101,29 @@ const onClick = (e) => {
   const { x, y } = e.target.getBoundingClientRect();
   const idx = Math.floor((e.pageX - x) / blockSize) + Math.floor((e.pageY - y) / blockSize) * blockCount;
 
-  if (checked[idx] !== null || connectedLine !== null) {
+  if (checked[idx] !== null || gameEnd) {
     return;
   }
+
+  element.push((() => {
+    let cnt = 0;
+    const func = turn ? renderO : renderX;
+
+    return () => func(idx, cnt === 100 ? cnt : cnt = cnt + 2);
+  })());
 
   checked[idx] = turn;
 
   const line = getConnectedLine();
 
   if (line) {
-    connectedLine = line;
+    element.push((() => {
+      let cnt = 0;
+
+      return () => renderLine(line, cnt === 100 ? cnt : cnt = cnt + 2);
+    })());
+
+    gameEnd = true;
 
     return;
   }
