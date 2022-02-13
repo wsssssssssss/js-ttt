@@ -1,0 +1,5 @@
+*{margin: 0; padding: 0; box-sizing: border-box;}
+#root{width: 1200px; height: auto; margin: 0 auto; padding-top: 5rem; display: grid; justify-content: center;}
+.btn{padding: 1rem; border: none; border-radius: .75rem; background: blue; color: #fff; transition: .3s;}
+.btn:hover{background: red; transition: .3s;}
+.title{font-size: 3rem; text-align: center;}
