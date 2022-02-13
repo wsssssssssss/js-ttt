@@ -11,22 +11,10 @@ let count = 0;
 let turnState = false;
 const turnChange = () => {
     turnState = !turnState;
-    if (turnState) {
-        turn.innerText = '1P';
-        return;
-    }
-    turn.innerText = '2P';
+    turn.innerText = turnState ? '1P' : '2P';
 };
 
-// 그리기 
-const init = () => {
-    turnState = false;
-    count = 0;
-    gameBoard = [];
-    turnChange();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    gameState.innerText = 'tic tac toe';
-    canvas.style.pointerEvents = 'auto';
+const render = () => {
     ctx.beginPath();
     for (let i = 1; i < 3; i++) {
         ctx.moveTo(5, 100 * i);
@@ -44,46 +32,45 @@ const init = () => {
             gameBoard[i].push(0);
         }
     }
+}
+
+// 그리기 
+const init = () => {
+    turnState = false;
+    count = 0;
+    gameBoard = [];
+    // turnChange();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    gameState.innerText = 'tic tac toe';
+    gameState.style.pointerEvents = 'none';
+    canvas.style.pointerEvents = 'auto';
+    render();
 };
 init();
 
-const listener = (e) => {
-    const setX = e.offsetX;
-    const setY = e.offsetY;
-    let xNum = 0;
-    let yNum = 0;
-    if (setX < 300) xNum = 2;
-    if (setX < 200) xNum = 1;
-    if (setX < 100) xNum = 0;
-    if (setY < 300) yNum = 2;
-    if (setY < 200) yNum = 1;
-    if (setY < 100) yNum = 0;
-    boardClick(xNum, yNum);
-};
 
 let drawState = true;
-const boardClick = (xNum, yNum) => {
-    console.log(drawState);
+const boardClick = (e) => {
+    let xNum = Math.floor( e.offsetX/100);
+    let yNum = Math.floor( e.offsetY/100);
     if (drawState) {
-        if (gameBoard[yNum][xNum] == 0) {
-            if(turnState) gameBoard[yNum][xNum] = 'o';
-            else          gameBoard[yNum][xNum] = 'x';
+        if (gameBoard[yNum][xNum] === 0) {
+            gameBoard[yNum][xNum] = turnState ? 'o' : 'x';
             let x = 100 * (xNum);
             let y = 100 * (yNum);
-            let count = -0.5;
-            let lineCount = 10;
-            let lineCountTwo = 90;
+           
             if (turnState) {
+                let count = -0.5;
                 drawState = false;
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 10;
                 const arcFrame = () => {
                     ctx.clearRect(x + 10, y + 10, 80, 80);
                     count += 0.04;
                     ctx.beginPath();
                     ctx.arc(50 + x, 50 + y, 35, -Math.PI * 0.5, Math.PI * count);
-                    ctx.strokeStyle = 'red';
-                    ctx.lineWidth = 10;
                     ctx.stroke();
-                    if (count <= 2) {
+                    if (count < 2) {
                         requestAnimationFrame(arcFrame);
                         return;
                     }
@@ -91,18 +78,20 @@ const boardClick = (xNum, yNum) => {
                 };
                 requestAnimationFrame(arcFrame);
             } else {  
+                let lineCount = 10;
+                let lineCountTwo = 90;
+                ctx.lineWidth = 10;
+                ctx.strokeStyle = '#000';
                 const lineFrame = () => {
                     drawState = false;
-                    lineCount+= 5
+                    lineCount+= 5;
                     ctx.beginPath();
-                    ctx.lineWidth = 10;
-                    ctx.strokeStyle = '#000';
                     if(lineCount <= 80){
                         ctx.moveTo(20 + x, 20 + y);
                         ctx.lineTo(lineCount + x, lineCount + y);
                         ctx.stroke();
                     }else{
-                        lineCountTwos = lineCount - 70;
+                        let lineCountTwos = lineCount - 70;
                         if(lineCountTwo >= 25){
                             lineCountTwo-=5;
                             ctx.moveTo(80 + x, 20 + y);
@@ -120,48 +109,45 @@ const boardClick = (xNum, yNum) => {
                 requestAnimationFrame(lineFrame);
             }
             turnChange();
-            gameBoardChk(xNum, yNum, gameBoard);
+            gameBoardChk(xNum, yNum);
         }
     }
 };
-
-const gameBoardChk = (x, y, gameArray) => {
+const leftLineChk = [[0, 0],[1, 1],[2, 2]];
+const rightLineChk = [[0, 2],[1, 1],[2, 0]];
+const gameBoardChk = (x, y) => {
     count++;
-    let lineValues = {startX: 0,startY: 0,endX: 0,endY: 0};
-    let valueChkX = [];
+   
+    const valueChkX = [];
     for (let i = 0; i < 3; i++) {
-        if (gameArray[y][i] == gameArray[y][x])valueChkX.push(true);
-        else                                   valueChkX.push(false);
+       valueChkX.push(gameBoard[y][i] == gameBoard[y][x]);
     }
 
-    let valueChkY = [];
+    const valueChkY = [];
     for (let i = 0; i < 3; i++) {
-        if (gameArray[i][x] == gameArray[y][x])valueChkY.push(true);
-        else                                   valueChkY.push(false);
+        valueChkY.push(gameBoard[i][x] == gameBoard[y][x]);
     }
 
     let valueChkDiagonalLeft = [];
-    let leftLineChk = [[0, 0],[1, 1],[2, 2]]
+  
     gameBoard.forEach((arr, idx) => {
         let i = leftLineChk[idx];
-        if (gameBoard[i[0]][i[1]] == gameArray[y][x])valueChkDiagonalLeft.push(true);
-        else                                         valueChkDiagonalLeft.push(false);
+        valueChkDiagonalLeft.push(gameBoard[i[0]][i[1]] == gameBoard[y][x]);
         
     })
 
     let valueChkDiagonalRight = [];
-    let rightLineChk = [[0, 2],[1, 1],[2, 0]]
+   
     gameBoard.forEach((arr, idx) => {
         let i = rightLineChk[idx];
-        if (gameBoard[i[0]][i[1]] == gameArray[y][x])valueChkDiagonalRight.push(true);
-        else                                         valueChkDiagonalRight.push(false);
-        
+        valueChkDiagonalRight.push(gameBoard[i[0]][i[1]] == gameBoard[y][x]);
     });
 
     if (count == 9) {
         gameEnd('over', x, y);
     }
     if (!new Set(valueChkX).has(false) || !new Set(valueChkY).has(false) || !new Set(valueChkDiagonalLeft).has(false) || !new Set(valueChkDiagonalRight).has(false)) {
+        let lineValues = {startX: 0,startY: 0,endX: 0,endY: 0};
         if (!new Set(valueChkX).has(false)) {
             lineValues.startX = 5;
             lineValues.endX = 290;
@@ -220,6 +206,7 @@ const gameEnd = (action, x, y) => {
             break;
     }
     canvas.style.pointerEvents = 'none';
+    gameState.style.pointerEvents = 'auto';
 };
 
 const createLine = (startX, startY, endX, endY) => {
@@ -232,5 +219,5 @@ const createLine = (startX, startY, endX, endY) => {
     ctx.stroke();
 };
 
-canvas.addEventListener('click', (e) => listener(e));
+canvas.addEventListener('click', boardClick);
 gameState.addEventListener('click', init);
